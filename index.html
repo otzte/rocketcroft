@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rocket Craft Calculator — Rust</title>
+<meta name="description" content="Work out the maximum number of Rust rockets you can craft from your sulfur, gunpowder and intermediate materials — with an exact craft plan in the right order.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#14110d; --bg-panel:#1d1812; --bg-inset:#0f0c09; --bg-chip:#26201a;
+  --border:rgba(210,170,110,.14); --border-strong:rgba(210,170,110,.26);
+  --rust:#c8642f; --rust-bright:#e8823c; --sulfur:#dcb73f; --steel:#7e94a6;
+  --red:#c84a32; --ok:#90a857;
+  --text:#ece3d3; --dim:#a39a8a; --faint:#6c6457;
+  --radius:9px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:"Barlow",system-ui,sans-serif; font-size:16px; line-height:1.55;
+  background-image:
+    radial-gradient(120% 80% at 50% -10%, rgba(200,100,47,.07), transparent 60%),
+    radial-gradient(100% 60% at 90% 110%, rgba(220,183,63,.04), transparent 55%);
+  background-attachment:fixed;
+  min-height:100vh;
+}
+body::after{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:9999; opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.wrap{max-width:1080px; margin:0 auto; padding:clamp(18px,4vw,40px) clamp(14px,3vw,28px) 60px}
+
+/* Header */
+header{border-bottom:1px solid var(--border); padding-bottom:20px; margin-bottom:28px}
+.kicker{font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.32em; text-transform:uppercase; color:var(--rust); display:flex; align-items:center; gap:10px}
+.kicker::before{content:""; width:26px; height:2px; background:var(--rust)}
+h1{font-family:"Oswald",sans-serif; font-weight:600; font-size:clamp(30px,6vw,52px); letter-spacing:.01em; text-transform:uppercase; margin:6px 0 4px; line-height:.98}
+h1 .l{color:var(--rust-bright)}
+.sub{color:var(--dim); font-size:14px; max-width:60ch}
+
+/* Layout */
+.grid{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.05fr); gap:24px; align-items:start}
+@media(max-width:820px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--bg-panel); border:1px solid var(--border); border-radius:var(--radius); padding:20px}
+.panel-title{font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.22em; text-transform:uppercase; color:var(--faint); margin:0 0 16px; display:flex; align-items:center; justify-content:space-between}
+
+/* Element tile */
+.tile{display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; flex:none;
+  border-radius:6px; font-family:"Oswald",sans-serif; font-weight:600; font-size:13px; letter-spacing:.02em;
+  background:var(--bg-chip); border:1px solid var(--border-strong); color:var(--dim)}
+.tile.s{color:var(--sulfur); border-color:rgba(220,183,63,.4)}
+.tile.gp{color:var(--rust-bright); border-color:rgba(232,130,60,.4)}
+.tile.c{color:var(--dim)}
+.tile.lgf{color:#c89a52; border-color:rgba(200,154,82,.35)}
+.tile.mf,.tile.mp{color:var(--steel); border-color:rgba(126,148,166,.35)}
+.tile.ex{color:var(--red); border-color:rgba(200,74,50,.4)}
+.tile.rkt{color:var(--rust-bright); border-color:rgba(232,130,60,.55); width:34px; height:34px; font-size:12px}
+
+/* Hero inputs */
+.hero-field{display:flex; align-items:center; gap:14px; background:var(--bg-inset); border:1px solid var(--border-strong); border-radius:var(--radius); padding:14px 16px; margin-bottom:12px; transition:border-color .15s}
+.hero-field:focus-within{border-color:var(--rust)}
+.hero-field .tile{width:40px; height:40px; font-size:15px}
+.hero-field .meta{flex:1; min-width:0}
+.hero-field .name{font-family:"Oswald",sans-serif; font-weight:500; text-transform:uppercase; letter-spacing:.04em; font-size:16px}
+.hero-field .hint{font-size:11.5px; color:var(--faint); font-family:"JetBrains Mono",monospace; letter-spacing:.02em}
+input[type=number]{width:120px; flex:none; background:transparent; border:none; border-bottom:1px solid var(--border-strong);
+  color:var(--text); font-family:"JetBrains Mono",monospace; font-weight:500; font-size:20px; text-align:right; padding:4px 2px; outline:none}
+input[type=number]:focus{border-color:var(--rust)}
+input[type=number]:disabled{color:var(--faint); border-color:transparent}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+input[type=number]{-moz-appearance:textfield}
+
+/* method toggle */
+.seg{display:inline-flex; background:var(--bg-inset); border:1px solid var(--border); border-radius:7px; padding:3px; gap:3px}
+.seg button{background:transparent; border:none; color:var(--dim); font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; padding:6px 11px; border-radius:5px; cursor:pointer; transition:.15s}
+.seg button.on{background:var(--rust); color:#1a1208; font-weight:700}
+.method-row{display:flex; align-items:center; justify-content:space-between; gap:12px; margin:18px 0 4px; flex-wrap:wrap}
+.method-row label{font-size:12px; color:var(--dim); font-family:"JetBrains Mono",monospace; letter-spacing:.04em; text-transform:uppercase}
+
+/* advanced */
+details.adv{margin-top:18px; border-top:1px solid var(--border); padding-top:16px}
+details.adv>summary{cursor:pointer; list-style:none; font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--faint); display:flex; align-items:center; gap:8px}
+details.adv>summary::-webkit-details-marker{display:none}
+details.adv>summary::before{content:"+"; color:var(--rust); font-weight:700; font-size:14px; width:12px}
+details.adv[open]>summary::before{content:"\2212"}
+.advnote{font-size:12px; color:var(--faint); margin:10px 0 14px}
+.matrow{display:flex; align-items:center; gap:12px; padding:9px 0; border-bottom:1px solid rgba(210,170,110,.07)}
+.matrow:last-child{border-bottom:none}
+.matrow .meta{flex:1; min-width:0}
+.matrow .name{font-size:14px; font-family:"Oswald",sans-serif; font-weight:400; text-transform:uppercase; letter-spacing:.03em}
+.matrow input[type=number]{width:92px; font-size:16px}
+.inf{display:inline-flex; align-items:center; gap:6px; cursor:pointer; user-select:none; font-family:"JetBrains Mono",monospace; font-size:11px; color:var(--faint); flex:none}
+.inf input{position:absolute; opacity:0; width:0; height:0}
+.inf .box{width:30px; height:18px; border-radius:10px; background:var(--bg-chip); border:1px solid var(--border-strong); position:relative; transition:.15s}
+.inf .box::after{content:""; position:absolute; top:2px; left:2px; width:12px; height:12px; border-radius:50%; background:var(--faint); transition:.15s}
+.inf input:checked+.box{background:rgba(200,100,47,.4); border-color:var(--rust)}
+.inf input:checked+.box::after{transform:translateX(12px); background:var(--rust-bright)}
+.inf input:checked~.lab{color:var(--rust-bright)}
+
+/* Result */
+.result-head{display:flex; align-items:flex-end; gap:18px; flex-wrap:wrap; margin-bottom:8px}
+.bignum{font-family:"Oswald",sans-serif; font-weight:700; font-size:clamp(58px,15vw,104px); line-height:.85; color:var(--rust-bright); letter-spacing:-.01em; font-variant-numeric:tabular-nums}
+.bigunit{font-family:"Oswald",sans-serif; font-weight:500; text-transform:uppercase; letter-spacing:.06em; font-size:18px; color:var(--text); padding-bottom:12px}
+.bigunit small{display:block; color:var(--faint); font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.1em}
+.limit{display:inline-flex; align-items:center; gap:8px; font-family:"JetBrains Mono",monospace; font-size:12px; letter-spacing:.04em; text-transform:uppercase; padding:6px 12px; border-radius:6px; background:rgba(200,74,50,.12); border:1px solid rgba(200,74,50,.3); color:#e0876f; margin-bottom:20px}
+.limit.zero{background:rgba(200,74,50,.16)}
+.limit.unbounded{background:rgba(144,168,87,.12); border-color:rgba(144,168,87,.3); color:var(--ok)}
+.limit b{color:#f0a98e; font-weight:700}
+
+/* allocation bar */
+.alloc{margin:6px 0 22px}
+.alloc-title{font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--faint); margin-bottom:9px}
+.bar{display:flex; height:34px; border-radius:7px; overflow:hidden; border:1px solid var(--border); background:var(--bg-inset)}
+.bar span{display:flex; align-items:center; justify-content:center; font-family:"JetBrains Mono",monospace; font-size:12px; font-weight:500; color:#1a1208; min-width:0; overflow:hidden; white-space:nowrap; transition:flex-grow .35s ease}
+.bar .seg-gp{background:var(--rust)}
+.bar .seg-ex{background:var(--sulfur)}
+.bar .seg-left{background:var(--bg-chip); color:var(--faint)}
+.legend{display:flex; gap:18px; flex-wrap:wrap; margin-top:10px; font-size:12px; color:var(--dim)}
+.legend i{display:inline-block; width:11px; height:11px; border-radius:3px; margin-right:6px; vertical-align:-1px}
+.aha{margin-top:14px; padding:12px 14px; border-left:2px solid var(--sulfur); background:rgba(220,183,63,.06); font-size:13.5px; color:var(--text)}
+.aha b{color:var(--sulfur); font-weight:600}
+
+/* craft plan */
+.plan-title{font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--faint); margin:24px 0 12px; border-top:1px solid var(--border); padding-top:18px}
+.step{display:flex; gap:14px; padding:13px 0; border-bottom:1px solid rgba(210,170,110,.08)}
+.step:last-child{border-bottom:none}
+.step-no{font-family:"Oswald",sans-serif; font-weight:600; font-size:15px; color:var(--rust); border:1px solid var(--border-strong); border-radius:6px; width:30px; height:30px; flex:none; display:flex; align-items:center; justify-content:center}
+.step.final .step-no{color:var(--rust-bright); border-color:var(--rust)}
+.step-body{flex:1; min-width:0}
+.step-do{font-family:"Oswald",sans-serif; font-size:17px; font-weight:500; text-transform:uppercase; letter-spacing:.02em}
+.step-do b{color:var(--rust-bright)}
+.step.final .step-do b{color:var(--rust-bright)}
+.consumes{display:flex; flex-wrap:wrap; gap:8px 12px; margin-top:8px}
+.cchip{display:inline-flex; align-items:center; gap:6px; font-family:"JetBrains Mono",monospace; font-size:12.5px; color:var(--dim)}
+.cchain{font-size:11px; color:var(--faint); margin-top:6px; font-family:"JetBrains Mono",monospace}
+
+/* leftovers */
+.left-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; margin-top:12px}
+.lcell{background:var(--bg-inset); border:1px solid var(--border); border-radius:7px; padding:9px 11px}
+.lcell .ln{font-size:11px; color:var(--faint); font-family:"JetBrains Mono",monospace; letter-spacing:.04em; text-transform:uppercase}
+.lcell .lv{font-family:"JetBrains Mono",monospace; font-weight:500; font-size:17px; color:var(--text); margin-top:2px}
+.lcell .lv.inf{color:var(--faint)}
+
+footer{margin-top:34px; padding-top:18px; border-top:1px solid var(--border); font-size:12px; color:var(--faint); line-height:1.7}
+footer a{color:var(--dim)}
+.btn-reset{background:transparent;border:1px solid var(--border-strong);color:var(--dim);font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:5px 9px;border-radius:5px;cursor:pointer}
+.btn-reset:hover{border-color:var(--rust);color:var(--rust-bright)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="kicker">Rust · ordnance manifest</div>
+  <h1>Rocket Craft <span class="l">Calculator</span></h1>
+  <p class="sub">Enter what you have. Get the exact craft plan and the maximum number of standard rockets — without dumping everything into gunpowder and starving the explosives stage.</p>
+</header>
+
+<div class="grid">
+  <!-- INPUTS -->
+  <section class="panel">
+    <div class="panel-title"><span>Your stock</span><button class="btn-reset" id="reset">reset</button></div>
+
+    <div class="hero-field">
+      <span class="tile s">S</span>
+      <span class="meta"><div class="name">Sulfur</div><div class="hint">smelted sulfur ore</div></span>
+      <input type="number" id="sulfur" min="0" step="100" inputmode="numeric" aria-label="Sulfur amount">
+    </div>
+
+    <div class="hero-field">
+      <span class="tile gp">GP</span>
+      <span class="meta"><div class="name">Gun Powder</div><div class="hint">finished, in your box</div></span>
+      <input type="number" id="gunpowder" min="0" step="50" inputmode="numeric" aria-label="Gun Powder amount">
+    </div>
+
+    <div class="method-row">
+      <label>Gun powder method</label>
+      <div class="seg" id="method" role="group" aria-label="Gun powder crafting method">
+        <button data-m="mixing" class="on">Mixing Table</button>
+        <button data-m="workbench">Workbench</button>
+      </div>
+    </div>
+    <div class="advnote" id="methodnote">Mixing table: 2 sulfur + 2 charcoal per gunpowder. Sulfur cost is identical to the workbench — only charcoal changes.</div>
+
+    <details class="adv">
+      <summary>Other materials</summary>
+      <div class="advnote">These are usually plentiful, so they default to unlimited. Untick to enter a real amount and let them limit the result.</div>
+      <div id="adv-mats"></div>
+    </details>
+  </section>
+
+  <!-- RESULTS -->
+  <section class="panel" aria-live="polite">
+    <div class="panel-title"><span>Result</span></div>
+    <div class="result-head">
+      <div class="bignum" id="rkt">0</div>
+      <div class="bigunit">Rockets<small>craftable</small></div>
+    </div>
+    <div id="limit" class="limit"></div>
+
+    <div class="alloc" id="allocBlock">
+      <div class="alloc-title">Sulfur allocation</div>
+      <div class="bar" id="bar"></div>
+      <div class="legend">
+        <span><i style="background:var(--rust)"></i>into gun powder</span>
+        <span><i style="background:var(--sulfur)"></i>held for explosives</span>
+        <span><i style="background:var(--bg-chip)"></i>unused</span>
+      </div>
+      <div class="aha" id="aha"></div>
+    </div>
+
+    <div class="plan-title">Craft plan — in this order</div>
+    <div id="plan"></div>
+
+    <div class="plan-title" style="border:none;padding-top:0;margin-top:22px">Left over</div>
+    <div class="left-grid" id="left"></div>
+  </section>
+</div>
+
+<footer>
+  Standard rocket only. Recipe data from the Rust Wiki (rust.fandom.com), 904.83 update: 1 rocket = 2 metal pipe + 150 gun powder + 10 explosives · 1 explosive = 50 gun powder + 3 low grade fuel + 10 sulfur + 10 metal fragments · 1 gun powder = 2 sulfur + 2–3 charcoal.<br>
+  Numbers drift on wipes — all recipe values live in the <code>RECIPE</code> object at the top of this file's script and are easy to edit.
+</footer>
+</div>
+
+<script>
+/* ============================================================
+   RECIPE CONSTANTS  —  edit here after a wipe / rebalance
+   ============================================================ */
+const RECIPE = {
+  gunpowderBatch: 10,                                  // gun powder crafts in batches of 10
+  gunpowder: {                                         // cost PER 1 gun powder
+    mixing:   { sulfur: 2, charcoal: 2 },
+    workbench:{ sulfur: 2, charcoal: 3 }
+  },
+  explosives: { gunpowder: 50, lowgrade: 3, sulfur: 10, metalfrags: 10 }, // per 1 explosive
+  rocket:     { metalpipe: 2, gunpowder: 150, explosives: 10 }            // per 1 rocket
+};
+const CAP = 10_000_000; // safety ceiling when nothing limits the result
+
+/* ============================================================
+   ENGINE
+   ============================================================ */
+function requirements(R, stock, method){
+  const gp = RECIPE.gunpowder[method];
+  const explNeed   = RECIPE.rocket.explosives * R;
+  const explCraft  = Math.max(0, explNeed - stock.explosives);
+  const pipeNeed   = RECIPE.rocket.metalpipe * R;
+  const lgfNeed    = RECIPE.explosives.lowgrade  * explCraft;
+  const fragNeed   = RECIPE.explosives.metalfrags* explCraft;
+  const gpForRkt   = RECIPE.rocket.gunpowder * R;
+  const gpForExpl  = RECIPE.explosives.gunpowder * explCraft;
+  const gpGross    = gpForRkt + gpForExpl;
+  const gpCraftRaw = Math.max(0, gpGross - stock.gunpowder);
+  const gpCraft    = Math.ceil(gpCraftRaw / RECIPE.gunpowderBatch) * RECIPE.gunpowderBatch;
+  const sForGp     = gp.sulfur   * gpCraft;
+  const cForGp     = gp.charcoal * gpCraft;
+  const sForExpl   = RECIPE.explosives.sulfur * explCraft;
+  return {
+    explNeed, explCraft, pipeNeed, lgfNeed, fragNeed,
+    gpForRkt, gpForExpl, gpGross, gpCraft,
+    sForGp, cForGp, sForExpl,
+    sulfurNeed: sForGp + sForExpl,
+    charcoalNeed: cForGp
+  };
+}
+function checks(R, stock, method){
+  const r = requirements(R, stock, method);
+  return [
+    ["Sulfur",          r.sulfurNeed,   stock.sulfur],
+    ["Charcoal",        r.charcoalNeed, stock.charcoal],
+    ["Low Grade Fuel",  r.lgfNeed,      stock.lowgrade],
+    ["Metal Fragments", r.fragNeed,     stock.metalfrags],
+    ["Metal Pipe",      r.pipeNeed,     stock.metalpipe]
+  ];
+}
+function feasible(R, stock, method){
+  return checks(R, stock, method).every(([,need,have]) => need <= have);
+}
+function maxRockets(stock, method){
+  if(!feasible(1, stock, method)) return 0;
+  let lo = 1, hi = 2;
+  while(feasible(hi, stock, method)){ lo = hi; hi *= 2; if(hi > CAP) return CAP; }
+  while(lo < hi){
+    const mid = Math.ceil((lo+hi)/2);
+    if(feasible(mid, stock, method)) lo = mid; else hi = mid-1;
+  }
+  return lo;
+}
+
+/* ============================================================
+   STATE + UI
+   ============================================================ */
+const ADV = [
+  {key:"charcoal",  sym:"C",   cls:"c",   name:"Charcoal",        unlimited:true},
+  {key:"lowgrade",  sym:"LGF", cls:"lgf", name:"Low Grade Fuel",  unlimited:true},
+  {key:"metalfrags",sym:"MF",  cls:"mf",  name:"Metal Fragments", unlimited:true},
+  {key:"metalpipe", sym:"MP",  cls:"mp",  name:"Metal Pipe",      unlimited:true},
+  {key:"explosives",sym:"EX",  cls:"ex",  name:"Explosives",      unlimited:false}
+];
+const DEFAULT = { sulfur:10000, gunpowder:2000, method:"mixing",
+  charcoal:{v:0,inf:true}, lowgrade:{v:0,inf:true}, metalfrags:{v:0,inf:true},
+  metalpipe:{v:0,inf:true}, explosives:{v:0,inf:false} };
+const STORE = "rust-rocket-calc-v1";
+
+let state;
+function load(){
+  try{ const s = JSON.parse(localStorage.getItem(STORE)); if(s && typeof s.sulfur==="number") return s; }catch(e){}
+  return structuredClone(DEFAULT);
+}
+function save(){ try{ localStorage.setItem(STORE, JSON.stringify(state)); }catch(e){} }
+
+const fmt = n => (n===Infinity ? "\u221E" : Math.round(n).toLocaleString("en-US"));
+function tile(sym,cls){ return `<span class="tile ${cls}">${sym}</span>`; }
+
+/* build advanced rows */
+const advWrap = document.getElementById("adv-mats");
+advWrap.innerHTML = ADV.map(m => `
+  <div class="matrow">
+    ${tile(m.sym,m.cls)}
+    <span class="meta"><div class="name">${m.name}</div></span>
+    <input type="number" id="in-${m.key}" min="0" step="${m.key==="explosives"?10:50}" inputmode="numeric" aria-label="${m.name} amount">
+    <label class="inf">
+      <input type="checkbox" id="inf-${m.key}">
+      <span class="box"></span><span class="lab">&#8734; unlimited</span>
+    </label>
+  </div>`).join("");
+
+/* wire inputs */
+state = load();
+const $ = id => document.getElementById(id);
+function syncInputsFromState(){
+  $("sulfur").value = state.sulfur || 0;
+  $("gunpowder").value = state.gunpowder || 0;
+  document.querySelectorAll("#method button").forEach(b=>b.classList.toggle("on", b.dataset.m===state.method));
+  methodNote();
+  ADV.forEach(m=>{
+    const s = state[m.key]; const inp=$("in-"+m.key); const chk=$("inf-"+m.key);
+    chk.checked = s.inf; inp.value = s.v||0; inp.disabled = s.inf;
+  });
+}
+function methodNote(){
+  $("methodnote").textContent = state.method==="mixing"
+    ? "Mixing table: 2 sulfur + 2 charcoal per gunpowder. Sulfur cost is identical to the workbench — only charcoal changes."
+    : "Workbench: 2 sulfur + 3 charcoal per gunpowder. One craft yields 10 gun powder.";
+}
+$("sulfur").addEventListener("input", e=>{ state.sulfur=Math.max(0,+e.target.value||0); render(); });
+$("gunpowder").addEventListener("input", e=>{ state.gunpowder=Math.max(0,+e.target.value||0); render(); });
+document.querySelectorAll("#method button").forEach(b=>b.addEventListener("click",()=>{
+  state.method=b.dataset.m;
+  document.querySelectorAll("#method button").forEach(x=>x.classList.toggle("on",x===b));
+  methodNote(); render();
+}));
+ADV.forEach(m=>{
+  $("in-"+m.key).addEventListener("input", e=>{ state[m.key].v=Math.max(0,+e.target.value||0); render(); });
+  $("inf-"+m.key).addEventListener("change", e=>{
+    state[m.key].inf=e.target.checked; $("in-"+m.key).disabled=e.target.checked; render();
+  });
+});
+$("reset").addEventListener("click",()=>{ state=structuredClone(DEFAULT); syncInputsFromState(); render(); });
+
+function stockFromState(){
+  const s = { sulfur: state.sulfur||0, gunpowder: state.gunpowder||0 };
+  ADV.forEach(m=> s[m.key] = state[m.key].inf ? Infinity : (state[m.key].v||0));
+  return s;
+}
+
+/* number count-up */
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+let lastR = 0, raf;
+function animateRkt(to){
+  const el=$("rkt"); cancelAnimationFrame(raf);
+  if(reduceMotion || to===lastR){ el.textContent=fmt(to); lastR=to; return; }
+  const from=lastR, t0=performance.now(), dur=420;
+  (function tick(now){
+    const p=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-p,3);
+    el.textContent = fmt(Math.round(from+(to-from)*e));
+    if(p<1) raf=requestAnimationFrame(tick); else { el.textContent=fmt(to); lastR=to; }
+  })(t0);
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render(){
+  save();
+  const stock = stockFromState();
+  const method = state.method;
+  const R = maxRockets(stock, method);
+  animateRkt(R);
+
+  const limitEl=$("limit");
+  if(R===CAP){
+    limitEl.className="limit unbounded";
+    limitEl.innerHTML="No limiting material — set a finite Sulfur amount";
+  } else if(R===0){
+    const fail = checks(1,stock,method).filter(([,n,h])=>n>h).map(([n])=>n);
+    limitEl.className="limit zero";
+    limitEl.innerHTML="Not enough for one rocket — short on <b>"+ (fail.join(", ")||"materials") +"</b>";
+  } else {
+    const fail = checks(R+1,stock,method).filter(([,n,h])=>n>h).map(([n])=>n);
+    limitEl.className="limit";
+    limitEl.innerHTML="Limited by <b>"+ (fail.join(", ")||"materials") +"</b>";
+  }
+
+  const r = requirements(Math.max(R,0), stock, method);
+
+  /* allocation bar (only meaningful with finite sulfur and R>0) */
+  const allocBlock=$("allocBlock");
+  if(R>0 && R!==CAP && stock.sulfur!==Infinity){
+    allocBlock.style.display="";
+    const total = stock.sulfur;
+    const left = Math.max(0, total - r.sulfurNeed);
+    const seg=(cls,val,lab)=>{
+      const pct = total>0 ? (val/total*100) : 0;
+      return `<span class="${cls}" style="flex:${val} 1 0" title="${lab}: ${fmt(val)}">${pct>11?fmt(val):""}</span>`;
+    };
+    $("bar").innerHTML =
+      (r.sForGp>0 ? seg("seg-gp", r.sForGp, "into gun powder"):"")+
+      (r.sForExpl>0 ? seg("seg-ex", r.sForExpl, "held for explosives"):"")+
+      (left>0 ? seg("seg-left", left, "unused"):"");
+    $("aha").innerHTML = `Of your <b>${fmt(total)} sulfur</b>, ${fmt(r.sForGp)} becomes gun powder and `+
+      `<b>${fmt(r.sForExpl)} is held back</b> for the ${fmt(r.explCraft)} explosives. `+
+      `Convert it all to gun powder and you can craft <b>0</b> rockets.`;
+  } else {
+    allocBlock.style.display="none";
+  }
+
+  /* craft plan */
+  const chip=(sym,cls,qty)=>`<span class="cchip">${tile(sym,cls)} ${fmt(qty)} ${sym}</span>`;
+  let n=0, steps="";
+  if(R>0 && R!==CAP){
+    if(r.gpCraft>0){
+      n++;
+      steps += `<div class="step"><div class="step-no">${n}</div><div class="step-body">
+        <div class="step-do">Craft <b>${fmt(r.gpCraft)}</b> Gun Powder</div>
+        <div class="consumes">${chip("S","s",r.sForGp)}${chip("C","c",r.cForGp)}</div></div></div>`;
+    }
+    if(r.explCraft>0){
+      n++;
+      steps += `<div class="step"><div class="step-no">${n}</div><div class="step-body">
+        <div class="step-do">Craft <b>${fmt(r.explCraft)}</b> Explosives</div>
+        <div class="consumes">${chip("GP","gp",r.gpForExpl)}${chip("S","s",r.sForExpl)}${chip("LGF","lgf",r.lgfNeed)}${chip("MF","mf",r.fragNeed)}</div></div></div>`;
+    }
+    n++;
+    steps += `<div class="step final"><div class="step-no">${n}</div><div class="step-body">
+      <div class="step-do">Craft <b>${fmt(R)}</b> Rocket${R>1?"s":""}</div>
+      <div class="consumes">${chip("MP","mp",r.pipeNeed)}${chip("GP","gp",r.gpForRkt)}${chip("EX","ex",r.explNeed)}</div></div></div>`;
+  } else {
+    steps = `<div class="cchain" style="padding:8px 0">No craftable rockets with the current stock.</div>`;
+  }
+  $("plan").innerHTML = steps;
+
+  /* leftovers */
+  const lo = el => `<div class="lcell"><div class="ln">${el.n}</div><div class="lv ${el.inf?'inf':''}">${fmt(el.v)}</div></div>`;
+  let lefts=[];
+  if(R>0 && R!==CAP){
+    const sLeft = stock.sulfur===Infinity?Infinity:stock.sulfur - r.sulfurNeed;
+    const cLeft = stock.charcoal===Infinity?Infinity:stock.charcoal - r.charcoalNeed;
+    const gpLeft = (stock.gunpowder + r.gpCraft) - r.gpGross;
+    const lgfLeft = stock.lowgrade===Infinity?Infinity:stock.lowgrade - r.lgfNeed;
+    const mfLeft = stock.metalfrags===Infinity?Infinity:stock.metalfrags - r.fragNeed;
+    const mpLeft = stock.metalpipe===Infinity?Infinity:stock.metalpipe - r.pipeNeed;
+    const exLeft = stock.explosives + r.explCraft - r.explNeed;
+    lefts = [
+      {n:"Sulfur",v:sLeft,inf:sLeft===Infinity},
+      {n:"Charcoal",v:cLeft,inf:cLeft===Infinity},
+      {n:"Gun Powder",v:gpLeft,inf:false},
+      {n:"Low Grade",v:lgfLeft,inf:lgfLeft===Infinity},
+      {n:"Metal Frags",v:mfLeft,inf:mfLeft===Infinity},
+      {n:"Metal Pipe",v:mpLeft,inf:mpLeft===Infinity},
+      {n:"Explosives",v:exLeft,inf:false}
+    ];
+  }
+  $("left").innerHTML = lefts.map(lo).join("") || `<div class="cchain">—</div>`;
+}
+
+syncInputsFromState();
+render();
+</script>
+</body>
+</html>
