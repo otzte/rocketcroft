@@ -4,22 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="google-site-verification" content="WQ4yzJVGXqDJarU99aIWCKTmKbWMcrO8qacjwjjQPPk" />
-<title>Rocket Craft Calculator — Rust Game</title>
-<meta name="description" content="Work out the maximum number of Rust rockets you can craft from your sulfur, gunpowder and intermediate materials — with an exact craft plan in the right order.">
+<title>Rust Explosives Solver — Cheapest Way to Boom Any Door or Wall</title>
+<meta name="description" content="Find the cheapest way to boom any Rust door or wall — rockets, C4, satchels or explosive ammo, including mixed combos — and plan the exact rocket craft order from your sulfur.">
 <link rel="canonical" href="https://otzte.github.io/rocketcroft/">
 <!-- Social / Discord preview card -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Rust Tools">
-<meta property="og:title" content="Rocket Craft Calculator — Rust">
-<meta property="og:description" content="Max rockets from your sulfur & gunpowder — with the exact craft order, so you never starve the explosives stage.">
+<meta property="og:title" content="Rust Explosives Solver — Cheapest Boom Cost">
+<meta property="og:description" content="The least sulfur to break any door or wall — rockets, C4, satchels, explosive ammo or the cheapest mix — plus the exact rocket craft plan.">
 <meta property="og:url" content="https://otzte.github.io/rocketcroft/">
 <meta property="og:image" content="https://otzte.github.io/rocketcroft/preview.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:image:alt" content="Rocket Craft Calculator — Rust">
+<meta property="og:image:alt" content="Rust Explosives Solver">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Rocket Craft Calculator — Rust">
-<meta name="twitter:description" content="Max rockets from your sulfur & gunpowder — with the exact craft order.">
+<meta name="twitter:title" content="Rust Explosives Solver — Cheapest Boom Cost">
+<meta name="twitter:description" content="The least sulfur to break any door or wall, including mixed combos — plus the exact rocket craft order.">
 <meta name="twitter:image" content="https://otzte.github.io/rocketcroft/preview.png">
 <meta name="theme-color" content="#c8642f">
 <style>
@@ -154,7 +154,7 @@ details.adv[open]>summary::before{content:"\2212"}
 .inf input:checked~.lab{color:var(--rust-bright)}
 
 /* ============ RESULT ============ */
-.modetabs{display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:6px}
+.modetabs{display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-bottom:6px}
 .modetabs button{background:var(--bg-inset); border:1px solid var(--border); color:var(--dim);
   font-family:"Oswald",sans-serif; font-weight:500; text-transform:uppercase; letter-spacing:.05em; font-size:14px;
   padding:10px 8px; border-radius:7px; cursor:pointer; transition:.15s}
@@ -229,6 +229,29 @@ details.adv[open]>summary::before{content:"\2212"}
 .aha{margin-top:14px; padding:12px 14px; border-left:2px solid var(--m-sulfur); background:rgba(218,210,98,.06); font-size:13.5px; color:var(--text)}
 .aha b{color:var(--m-sulfur); font-weight:600}
 
+/* ============ CHEAPEST BOOM ============ */
+.brow{padding:10px 12px; border:1px solid var(--border); border-radius:8px; background:var(--bg-inset); margin-bottom:6px}
+.brow.best{border-color:var(--rust); background:rgba(200,100,47,.10)}
+.brow-top{display:flex; align-items:center; gap:10px}
+.brow .btiles{display:inline-flex; gap:4px; flex:none}
+.brow .bname{font-family:"Oswald",sans-serif; font-weight:500; text-transform:uppercase; letter-spacing:.03em; font-size:15px; flex:1; min-width:0; line-height:1.15}
+.brow .bsulf{font-family:"JetBrains Mono",monospace; font-weight:600; font-size:16px; color:var(--m-sulfur); font-variant-numeric:tabular-nums; flex:none; min-width:64px; text-align:right; margin-left:auto}
+.brow.best .bsulf{color:var(--rust-bright)}
+.brow .bmeta{font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.02em; color:var(--faint); margin-top:5px}
+.btag{font-family:"JetBrains Mono",monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--rust-bright); border:1px solid var(--rust); border-radius:4px; padding:2px 6px; flex:none; white-space:nowrap}
+
+/* single-explosive reference — additional info, set apart from the ranking */
+.refwrap{margin-top:22px; padding-top:16px; border-top:1px solid var(--border)}
+.ref-head{font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--faint); margin-bottom:8px}
+.refrow{display:flex; align-items:center; gap:10px; padding:7px 2px; border-bottom:1px solid rgba(210,170,110,.06)}
+.refrow:last-child{border-bottom:none}
+.refrow .rtile{flex:none; opacity:.7}
+.refrow .rn{flex:1; min-width:0; font-size:13.5px; color:var(--dim)}
+.refrow .rstar{color:var(--faint)}
+.refrow .rq{font-family:"JetBrains Mono",monospace; font-size:12.5px; color:var(--faint); min-width:48px; text-align:right; white-space:nowrap}
+.refrow .rs{font-family:"JetBrains Mono",monospace; font-size:13.5px; color:var(--dim); min-width:62px; text-align:right; font-variant-numeric:tabular-nums}
+.ref-note{font-size:11.5px; color:var(--faint); margin:11px 0 0; line-height:1.55}
+
 /* craft plan */
 .plan-title{font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--faint); margin:24px 0 4px; border-top:1px solid var(--border); padding-top:18px}
 .plan-sub{font-size:12.5px; color:var(--faint); margin:0 0 10px}
@@ -261,9 +284,9 @@ footer a{color:var(--dim)}
 {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  "name": "Rocket Craft Calculator — Rust",
+  "name": "Rust Explosives Solver",
   "url": "https://otzte.github.io/rocketcroft/",
-  "description": "Work out the maximum number of Rust rockets you can craft from your sulfur, gunpowder and intermediate materials — with an exact craft plan in the right order.",
+  "description": "Find the cheapest way to boom any Rust door or wall — rockets, C4, satchels or explosive ammo, including mixed combos — and plan the exact rocket craft order from your sulfur.",
   "applicationCategory": "GameApplication",
   "operatingSystem": "Any (web browser)",
   "browserRequirements": "Requires JavaScript",
@@ -278,8 +301,8 @@ footer a{color:var(--dim)}
 <div class="wrap">
 <header>
   <div class="kicker">Rust · ordnance manifest</div>
-  <h1>Rocket Craft <span class="l">Calculator</span></h1>
-  <p class="sub">Enter what you have, pick a raid target, and get the exact craft plan — without dumping everything into gunpowder and starving the explosives stage.</p>
+  <h1>Explosives <span class="l">Solver</span></h1>
+  <p class="sub">Find the cheapest way to boom any door or wall, see what your sulfur can craft, and get the exact craft order — without wasting boom or starving the explosives stage.</p>
 </header>
 
 <!-- sticky mini result, mobile only -->
@@ -338,6 +361,7 @@ footer a{color:var(--dim)}
     <div class="modetabs" role="tablist" aria-label="What do you want to know?">
       <button data-mode="craft" role="tab" aria-selected="true" class="on">Craft max</button>
       <button data-mode="raid" role="tab" aria-selected="false">Raid goal</button>
+      <button data-mode="boom" role="tab" aria-selected="false">Cheapest boom</button>
     </div>
     <p class="mode-sub" id="modesub"></p>
 
@@ -403,12 +427,40 @@ footer a{color:var(--dim)}
       </div>
       <div class="target-cap" id="tinvite">Tap what you're raiding &mdash; tap again for more of it.</div>
     </div>
+
+    <!-- VIEW: cheapest boom -->
+    <div id="view-boom" hidden>
+      <div class="target">
+        <div class="target-head">
+          <span class="tt">What are you breaking?</span>
+          <label class="tcustom">custom HP
+            <input type="number" id="bhp" min="1" max="100000" step="50" inputmode="numeric" aria-label="Custom entity HP">
+          </label>
+        </div>
+        <div class="tchips" id="bchips"></div>
+      </div>
+
+      <div id="boom-out" hidden>
+        <div class="result-head">
+          <div class="bignum farm" id="boomnum">0</div>
+          <div class="bigunit">Sulfur<small>best raid plan</small></div>
+        </div>
+        <div class="aha" id="boomcombo"></div>
+
+        <div class="plan-title">Rocket / C4 + ammo plans, ranked</div>
+        <p class="plan-sub">Cheapest first; each step down trades a little sulfur for fewer shots. <b>Best</b> is the cheapest plan under a ~50-shot cap &mdash; but shots &amp; actions are shown on every row so you can pick your own trade-off.</p>
+        <div id="boomtable"></div>
+        <div id="boomref"></div>
+      </div>
+      <div class="target-cap" id="binvite">Tap what you want to break &mdash; or type a custom HP.</div>
+    </div>
   </section>
 </div>
 
 <footer>
   Standard rocket only. Recipe data from the Rust Wiki (rust.fandom.com), 904.83 update: 1 rocket = 2 metal pipe + 150 gun powder + 10 explosives · 1 explosive = 50 gun powder + 3 low grade fuel + 10 sulfur + 10 metal fragments · 1 gun powder = 2 sulfur + 2–3 charcoal.<br>
   Raid targets use commonly cited hard-side rocket counts — adjust to your wipe in the <code>TARGETS</code> constant. All recipe values live in the <code>RECIPE</code> object at the top of this file's script and are easy to edit.<br>
+  Cheapest-boom data lives in the <code>ENTITIES</code> (HP + real per-hit damage of each explosive) and <code>BOOM_METHODS</code> (sulfur per unit) constants — edit after a wipe. The solver minimises sulfur to cross the HP line, comparing every single explosive and the cheapest two-explosive mix (e.g. soften with C4, finish with explosive ammo). Sulfur per explosive: rocket 1400, C4 2200, satchel 480, beancan 120, explosive 5.56 ammo 25. Per-hit damage from current Rust raid charts (rocket 220 to metal doors, 137 to walls; C4 275 to walls, 440 garage, 550 doors) — verify against your wipe.<br>
   Unofficial fan-made tool. Not affiliated with or endorsed by Facepunch Studios. "Rust" and all related assets are property of their respective owners.
 </footer>
 </div>
@@ -436,6 +488,45 @@ const TARGETS = [
   { n:"Armored Wall", r:15 }
 ];
 const CAP = 10_000_000; // safety ceiling when nothing limits the result
+
+/* ============================================================
+   CHEAPEST-BOOM DATA  —  edit here after a wipe / rebalance
+   ============================================================ */
+/* sulfur PER unit of each explosive. Rocket reads from RECIPE so it
+   stays in sync with the craft engine; the rest are raw-craft sulfur.
+   soft = a generic per-hit damage used ONLY as a fallback for custom HP. */
+/* meta:true = reliable, fast, raider-preferred (used for the recommended
+   plans + mixes). Satchels (dud chance) and beancans (weak/janky) are
+   meta:false: shown only as a pure-cost reference, never in the best mix. */
+const BOOM_METHODS = [
+  { key:"rocket",  name:"Rocket",              short:"Rocket",  sym:"RKT", cls:"rkt", soft:220,  meta:true,  sulfur:()=>perRocketSulfur(state.method) },
+  { key:"c4",      name:"C4",                  short:"C4",      sym:"C4",  cls:"ex",  soft:550,  meta:true,  sulfur:()=>2200 },
+  { key:"ammo",    name:"Explosive 5.56 Ammo", short:"Ammo",    sym:"556", cls:"s",   soft:3.97, meta:true,  sulfur:()=>25 },
+  { key:"satchel", name:"Satchel Charge",      short:"Satchel", sym:"SC",  cls:"mp",  soft:75,   meta:false, sulfur:()=>480 },
+  { key:"beancan", name:"Beancan Grenade",     short:"Beancan", sym:"BC",  cls:"lgf", soft:14,   meta:false, sulfur:()=>120 }
+];
+/* HP + the REAL per-hit damage each explosive deals to THIS entity (hard
+   side for walls). Counts to destroy are derived as ceil(hp / damage), so
+   they match the raid charts — and, crucially, mixed combos use the true
+   damage, so "1 rocket leaves 30 HP, finish with a few ammo" is exact
+   instead of assuming a rocket only removes its even share of the HP. */
+const ENTITIES = [
+  { n:"Wooden Door",      hp:200,  dmg:{ rocket:247, c4:550, satchel:110, beancan:24,   ammo:12.6  } },
+  { n:"Sheet Door",       hp:250,  dmg:{ rocket:220, c4:550, satchel:75,  beancan:14,   ammo:3.97  } },
+  { n:"Garage Door",      hp:600,  dmg:{ rocket:220, c4:440, satchel:70,  beancan:14.4, ammo:4     } },
+  { n:"Armored Door",     hp:1000, dmg:{ rocket:200, c4:440, satchel:70,  beancan:14.5, ammo:4     } },
+  { n:"Stone Wall",       hp:500,  dmg:{ rocket:137, c4:275, satchel:52,  beancan:11,   ammo:2.71  } },
+  { n:"Sheet Metal Wall", hp:1000, dmg:{ rocket:137, c4:275, satchel:44,  beancan:7.65, ammo:2.5   } },
+  { n:"Armored Wall",     hp:2000, dmg:{ rocket:137, c4:275, satchel:44,  beancan:9,    ammo:2.504 } }
+];
+/* Practical "best" = the CHEAPEST meta-tool plan whose explosive-ammo
+   shot count is within this cap. Shots are fast (you empty 10 rounds
+   quicker than reloading a rocket), so ammo isn't penalised per-shot —
+   it's just capped, because past ~50 rounds a raid gets tedious. Over the
+   cap, the solver spends one more rocket/C4 to bring the shots down.
+   Examples: sheet door -> 1 rocket + 8 ammo (63 ammo is cheaper but >cap);
+   garage stays 1 C4 + ~40 ammo (under cap); armored wall stays 7 C4 + 30. */
+const AMMO_CAP = 50;
 
 /* ============================================================
    ENGINE
@@ -512,6 +603,81 @@ function progressToNext(R, stock, method){
 }
 
 /* ============================================================
+   CHEAPEST-BOOM SOLVER
+   Minimise sulfur to deal >= HP damage to an entity, using the REAL
+   per-hit damage of each explosive against it. We search every
+   (primary, finisher) pair over all primary hit counts j: pile on j
+   hits of the primary, then cover whatever HP is left with the cheapest
+   number of one finisher. Overkill on the final hit is free. This
+   covers all pure methods (j = hits-to-kill, or j = 0) and the classic
+   mixes ("1 rocket leaves 30 HP, finish with a few explosive ammo")
+   exactly — ~20k iterations, runs live. */
+function dmgMapFor(t){
+  if(t.dmg) return t.dmg;                   // listed entity: real per-hit damage
+  const d = {};                             // custom HP: fall back to soft damage
+  for(const m of BOOM_METHODS) d[m.key] = m.soft;
+  return d;
+}
+function solveBoom(t){
+  const dmg = dmgMapFor(t), hp = t.hp;
+  const ms = BOOM_METHODS.filter(m => m.meta && (dmg[m.key]||0) > 0);
+  const cost = m => m.sulfur();
+  const kill = m => Math.ceil(hp / dmg[m.key]);    // hits to destroy alone
+  const cands = [];                                // every (primary, finisher) plan
+  const add = combo => {
+    const sulfur  = combo.reduce((a,c) => a + c.n * cost(c.m), 0);
+    const ammo    = combo.reduce((a,c) => a + (c.m.key === "ammo" ? c.n : 0), 0);
+    const actions = combo.reduce((a,c) => a + c.n, 0);   // total items handled (informative)
+    cands.push({ sulfur, ammo, actions, combo });
+  };
+  for(const p of ms){
+    const maxJ = kill(p);
+    for(let j=0; j<=maxJ; j++){
+      const rem = Math.max(0, hp - j * dmg[p.key]);
+      if(rem === 0){ if(j > 0) add([{ m:p, n:j }]); continue; }
+      for(const f of ms){
+        const kf = Math.ceil(rem / dmg[f.key]);
+        add(p.key === f.key
+          ? [{ m:p, n:j + kf }]
+          : (j>0 ? [{ m:p, n:j }, { m:f, n:kf }] : [{ m:f, n:kf }]));
+      }
+    }
+  }
+  // dedupe identical plans, then rank by sulfur (tie -> fewer shots)
+  const seen = new Set(), distinct = [];
+  for(const c of cands){
+    const sig = c.combo.map(x => x.m.key + ":" + x.n).join("+");
+    if(!seen.has(sig)){ seen.add(sig); distinct.push(c); }
+  }
+  distinct.sort((a,b) => a.sulfur - b.sulfur || a.ammo - b.ammo);
+  // Pareto frontier on (sulfur, ammo shots): the cheapest plan, then only
+  // plans that cut the shot count further (spend a bit more to shoot less).
+  const plans = [];
+  let minAmmo = Infinity;
+  for(const c of distinct){
+    if(c.ammo < minAmmo){ plans.push(c); minAmmo = c.ammo; }
+  }
+  const cheapest = plans[0];
+  // practical best: cheapest plan whose shot count is within the cap.
+  // plans run cheap->expensive with falling shots, so it's the first <= cap.
+  const best = plans.find(c => c.ammo <= AMMO_CAP) || plans[plans.length - 1];
+  // informative reference: every single explosive on its own (incl. the
+  // unreliable satchel/beancan), pure cost, ranked. Not recommended, shown
+  // so the user can decide for themselves.
+  const singles = BOOM_METHODS
+    .filter(m => (dmg[m.key]||0) > 0)
+    .map(m => { const n = Math.ceil(hp / dmg[m.key]); return { m, n, sulfur:n * cost(m) }; })
+    .sort((a,b) => a.sulfur - b.sulfur);
+  return { cheapest, best, plans, singles };
+}
+function boomTarget(){
+  const b = state.boom || {};
+  if(b.hp && b.hp > 0) return { n:`Custom · ${fmt(b.hp)} HP`, hp:b.hp, dmg:null };
+  if(b.sel != null && ENTITIES[b.sel]) return ENTITIES[b.sel];
+  return null;
+}
+
+/* ============================================================
    STATE + UI
    ============================================================ */
 const ADV = [
@@ -523,18 +689,20 @@ const ADV = [
 ];
 const DEFAULT = { sulfur:10000, gunpowder:2000, method:"mixing", mode:"craft",
   raid:{ counts:{ "5":1 }, extra:0 },
+  boom:{ sel:1, hp:0 },
   charcoal:{v:0,inf:true}, lowgrade:{v:0,inf:true}, metalfrags:{v:0,inf:true},
   metalpipe:{v:0,inf:true}, explosives:{v:0,inf:false} };
 const STORE = "rust-rocket-calc-v3";
 
 let state;
 function load(){
-  try{ const s = JSON.parse(localStorage.getItem(STORE)); if(s && typeof s.sulfur==="number" && s.raid){ s.mode = s.mode || "craft"; return s; } }catch(e){}
+  try{ const s = JSON.parse(localStorage.getItem(STORE)); if(s && typeof s.sulfur==="number" && s.raid){ s.mode = s.mode || "craft"; if(!s.boom) s.boom = { sel:1, hp:0 }; return s; } }catch(e){}
   for(const old of ["rust-rocket-calc-v2","rust-rocket-calc-v1"]){ // migrate older state
     try{
       const s = JSON.parse(localStorage.getItem(old));
       if(s && typeof s.sulfur==="number"){
         s.raid = { counts:{}, extra:(typeof s.target==="number" && s.target>0) ? s.target : 0 };
+        s.boom = { sel:1, hp:0 };
         s.mode = "craft";
         delete s.target;
         return s;
@@ -583,6 +751,16 @@ function renderChips(){
   }).join("");
 }
 
+/* build boom chips — single select (tap to choose the entity) */
+const bchipsWrap = document.getElementById("bchips");
+function renderBoomChips(){
+  const sel = (state.boom && (!state.boom.hp || state.boom.hp<=0)) ? state.boom.sel : null;
+  bchipsWrap.innerHTML = ENTITIES.map((e,i) => `
+    <span class="tchip ${i===sel?"on":""}">
+      <button class="add" data-i="${i}" aria-label="Solve cheapest boom for ${e.n}">${e.n}<small>${fmt(e.hp)} hp</small></button>
+    </span>`).join("");
+}
+
 /* wire inputs */
 state = load();
 const $ = id => document.getElementById(id);
@@ -596,7 +774,9 @@ function syncInputsFromState(){
     chk.checked = s.inf; inp.value = s.v||0; inp.disabled = s.inf;
   });
   $("textra").value = state.raid.extra || "";
+  $("bhp").value = (state.boom && state.boom.hp>0) ? state.boom.hp : "";
   renderChips();
+  renderBoomChips();
   syncTabs();
 }
 function syncTabs(){
@@ -605,9 +785,10 @@ function syncTabs(){
     b.classList.toggle("on", on);
     b.setAttribute("aria-selected", on);
   });
-  $("modesub").textContent = state.mode === "craft"
-    ? "What your stock yields right now \u2014 and in which order to craft it."
-    : "What your raid costs \u2014 and how much is still left to farm.";
+  $("modesub").textContent =
+    state.mode === "craft" ? "What your stock yields right now \u2014 and in which order to craft it." :
+    state.mode === "raid"  ? "What your raid costs \u2014 and how much is still left to farm." :
+                             "The fastest practical way to break a door or wall \u2014 few booms, not 60 shots to save loose change.";
 }
 document.querySelectorAll(".modetabs button").forEach(b=>b.addEventListener("click",()=>{
   state.mode = b.dataset.mode;
@@ -658,6 +839,20 @@ $("textra").addEventListener("input", e=>{
   state.raid.extra = (v >= 1) ? Math.min(v, 999) : 0;
   render();
 });
+bchipsWrap.addEventListener("click", e=>{
+  const btn = e.target.closest("button");
+  if(!btn) return;
+  state.boom.sel = +btn.dataset.i;
+  state.boom.hp = 0;
+  $("bhp").value = "";
+  renderBoomChips(); render();
+});
+$("bhp").addEventListener("input", e=>{
+  const v = Math.floor(+e.target.value);
+  state.boom.hp = (v >= 1) ? Math.min(v, 100000) : 0;
+  if(state.boom.hp > 0) state.boom.sel = null;
+  renderBoomChips(); render();
+});
 $("tclear").addEventListener("click", ()=>{
   state.raid = { counts:{}, extra:0 };
   $("textra").value = "";
@@ -700,6 +895,7 @@ function perRocketSulfur(method){
    ============================================================ */
 const animRkt  = makeCounter(document.getElementById("rkt"));
 const animFarm = makeCounter(document.getElementById("farmnum"));
+const animBoom = makeCounter(document.getElementById("boomnum"));
 const TI = { "Sulfur":["S","s"], "Charcoal":["C","c"], "Low Grade Fuel":["LGF","lgf"], "Metal Fragments":["MF","mf"], "Metal Pipe":["MP","mp"] };
 
 /* shared step-plan renderer: req must come from requirements(N, stock, method) */
@@ -874,6 +1070,61 @@ function renderRaidView(stock, method, R){
   return { T, primary, reached };
 }
 
+function renderBoomView(){
+  renderBoomChips();
+  const t = boomTarget();
+  const out = $("boom-out"), inv = $("binvite");
+  if(!t){ out.hidden = true; inv.hidden = false; return { cheapest:null }; }
+  out.hidden = false; inv.hidden = true;
+
+  const { cheapest, best, plans, singles } = solveBoom(t);
+  animBoom(best.sulfur);
+
+  const comboStr = c => c.combo.map(x => `<b>${fmt(x.n)}×</b> ${x.m.name}`).join(" + ");
+  const metric = p => `${fmt(p.ammo)} shot${p.ammo!==1?"s":""} · ${fmt(p.actions)} action${p.actions!==1?"s":""}`;
+
+  let html = `Best raid: ${comboStr(best)} — ${metric(best)}. Overkill on the last hit is free, you only need to cross <b>${fmt(t.hp)} HP</b>.`;
+  if(best !== cheapest){
+    html += `<br>Absolute cheapest is ${fmt(cheapest.sulfur)} sulfur (${comboStr(cheapest)}) — but that's <b>${fmt(cheapest.ammo)} shots</b>, over the ${AMMO_CAP}-round cap, to save only ${fmt(best.sulfur - cheapest.sulfur)} sulfur.`;
+  } else {
+    html += ` Also the absolute cheapest.`;
+  }
+  $("boomcombo").innerHTML = html;
+
+  $("boomtable").innerHTML = plans.slice(0, 7).map(p => {
+    const isBest = p === best, isCheap = p === cheapest;
+    const tiles = p.combo.map(x => tile(x.m.sym, x.m.cls)).join("");
+    const txt   = p.combo.map(x => `${fmt(x.n)}× ${x.m.short}`).join(" + ");
+    const tag = (isBest && isCheap) ? '<span class="btag">cheapest + best</span>'
+      : isBest  ? '<span class="btag">best</span>'
+      : isCheap ? '<span class="btag">cheapest</span>' : '';
+    return `<div class="brow ${isBest ? "best" : ""}">
+      <div class="brow-top">
+        <span class="btiles">${tiles}</span>
+        <span class="bname">${txt}</span>
+        <span class="bsulf">${fmt(p.sulfur)}</span>
+        ${tag}
+      </div>
+      <div class="bmeta">${metric(p)}</div>
+    </div>`;
+  }).join("");
+
+  // informative single-explosive reference (incl. unreliable satchel/beancan)
+  const hasNonMeta = singles.some(s => !s.m.meta);
+  $("boomref").innerHTML = `<div class="refwrap">
+    <div class="ref-head">Single explosives · reference only</div>
+    ${singles.map(s => `<div class="refrow">
+      <span class="rtile">${tile(s.m.sym, s.m.cls)}</span>
+      <span class="rn">${s.m.name}${s.m.meta ? "" : '<span class="rstar"> *</span>'}</span>
+      <span class="rq">×${fmt(s.n)}</span>
+      <span class="rs">${fmt(s.sulfur)}</span>
+    </div>`).join("")}
+    ${hasNonMeta ? '<p class="ref-note">* Satchel &amp; beancan are slow and fiddly to handle — listed for completeness, never picked as best.</p>' : ""}
+  </div>`;
+
+  return { cheapest: best.sulfur };
+}
+
 function render(){
   save();
   const stock = stockFromState();
@@ -882,16 +1133,29 @@ function render(){
   $("sulfurhint").textContent = `smelted ore \u00B7 \u2248${fmt(perRocketSulfur(method))} per rocket from scratch`;
 
   /* mode switch */
-  const craftMode = state.mode !== "raid";
-  $("view-craft").hidden = !craftMode;
-  $("view-raid").hidden  =  craftMode;
+  const mode = state.mode === "raid" || state.mode === "boom" ? state.mode : "craft";
+  $("view-craft").hidden = mode !== "craft";
+  $("view-raid").hidden  = mode !== "raid";
+  $("view-boom").hidden  = mode !== "boom";
 
   let raidInfo = { T:null, primary:null, reached:false };
-  if(craftMode) renderCraftView(stock, method, R);
-  else          raidInfo = renderRaidView(stock, method, R);
+  let boomInfo = { cheapest:null };
+  if(mode === "craft")     renderCraftView(stock, method, R);
+  else if(mode === "raid") raidInfo = renderRaidView(stock, method, R);
+  else                     boomInfo = renderBoomView();
 
   /* sticky mini result */
-  if(craftMode || !raidInfo.T){
+  if(mode === "boom"){
+    if(boomInfo.cheapest != null){
+      $("stickyN").textContent = fmt(boomInfo.cheapest);
+      $("stickyL").textContent = "sulfur to break";
+      $("stickyT").textContent = "best raid";
+    } else {
+      $("stickyN").textContent = "—";
+      $("stickyL").textContent = "pick a target";
+      $("stickyT").textContent = "";
+    }
+  } else if(mode === "craft" || !raidInfo.T){
     $("stickyN").textContent = fmt(R);
     $("stickyL").textContent = "rockets";
     $("stickyT").textContent = "";

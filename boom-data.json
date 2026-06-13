@@ -1,0 +1,148 @@
+{
+  "_about": "Verified Rust raid / cheapest-boom research dump. Source of truth for the ENTITIES + BOOM_METHODS constants in index.html. Numbers gathered June 2026; door damage values confirmed by the project owner against the current wipe.",
+  "_schema": {
+    "methods[].sulfur": "sulfur cost per single unit of that explosive",
+    "entities[].hp": "entity health",
+    "entities[].damage": "REAL per-hit damage of each explosive to THIS entity (varies per material/face)",
+    "entities[].destroy": "units to destroy alone = ceil(hp / damage); should match published raid charts",
+    "entities[].pureCostSulfur": "destroy * methods.sulfur",
+    "entities[].cheapest": "absolute minimum sulfur to cross HP (single explosive or 2-explosive meta mix); often dozens of ammo shots",
+    "entities[].best": "PRACTICAL pick: the CHEAPEST meta plan whose explosive-ammo shot count is <= ammoCap. Shots are fast (not penalised per-shot), just capped; over the cap, spend one more rocket/C4 to shoot less",
+    "ammoCap": "max explosive-5.56 rounds tolerated in the 'best' plan; 50 (user: 40-50)",
+    "confidence": "high = cross-confirmed; medium = derived or single-source; low = conflicting sources"
+  },
+  "ammoCap": 50,
+  "_philosophy": "Nobody raids with satchel+beancan (annoying to handle), and you empty 10 explosive rounds faster than you reload a rocket - so shots aren't penalised one-for-one, they're just capped. (1) Only meta tools (rocket, C4, ammo) are used for recommendations + mixes. (2) The app ranks the Pareto frontier from 'cheapest but most shots' to 'fewest shots'. (3) 'best' = the cheapest plan with ammo shots <= ammoCap (50). Examples: sheet door best = 1 rocket + 8 ammo (63 ammo is cheaper but >cap); garage stays 1 C4 + ~40 ammo (under cap); armored wall stays 7 C4 + 30 ammo (30 under cap); stone/metal wall go to pure C4 because their cheapest mix needs 70-83 shots.",
+  "_uiDesign": "Recommendation + full transparency, not auto-decide-everything. (a) Prominent: the rocket/C4+ammo plans ranked (the meta cross-product), with the capped 'best' highlighted. (b) Every row shows BOTH metrics - ammo shots AND total actions - purely informative, so the user can pick their own trade-off. (c) A dim single-explosive reference line lists all five tools incl. satchel/beancan (marked *), informative only, never picked as best. The cap drives the recommendation; the metrics and satchel/beancan are there to inform, not to decide.",
+
+  "_metaToolset": "Only rocket, C4 and explosive 5.56 ammo (meta:true) are used for the recommended cheapest/best plans and their mixes. Satchel and beancan (meta:false) are unreliable/slow and shown as pure-cost reference only - never in the best mix. This matches how players actually raid.",
+  "methods": [
+    { "key": "rocket",  "name": "Rocket",                  "sulfur": 1400, "meta": true,  "confidence": "high",   "note": "Raw sulfur from the craft tree (matches index.html RECIPE: 150 GP + 10 explosives). Some calculators show ~1450-1453 due to gunpowder batch rounding." },
+    { "key": "c4",      "name": "C4 (Timed Explosive Charge)", "sulfur": 2200, "meta": true, "confidence": "high", "note": "20 explosives + 5 cloth + 2 tech trash; sulfur portion 2200." },
+    { "key": "ammo",    "name": "Explosive 5.56 Rifle Ammo","sulfur": 25,   "meta": true,  "confidence": "high",   "note": "Per round. Finest granularity, so usually the cheapest finisher and often the cheapest pure method on soft targets." },
+    { "key": "satchel", "name": "Satchel Charge",          "sulfur": 480,  "meta": false, "confidence": "high",   "note": "Reference only. Has a dud / re-light chance; effective cost higher." },
+    { "key": "beancan", "name": "Beancan Grenade",         "sulfur": 120,  "meta": false, "confidence": "medium", "note": "Reference only. Door charts imply 120 each; one stone-wall source implied 60 each (likely thrown-vs-stuck or data error)." },
+    { "key": "hvrocket","name": "High Velocity Rocket",    "sulfur": 420,  "meta": false, "confidence": "medium", "note": "Not used yet. ~40% less damage to buildings (~75 vs walls) but far cheaper; candidate to add to the meta set." },
+    { "key": "incendiaryrocket", "name": "Incendiary Rocket", "sulfur": 610, "meta": false, "confidence": "low", "note": "Not used. Weak vs structures." }
+  ],
+
+  "entities": [
+    {
+      "name": "Wooden Door", "hp": 200, "face": "n/a", "confidence": "high",
+      "damage":  { "rocket": 247, "c4": 550, "satchel": 110, "beancan": 24, "ammo": 12.6 },
+      "destroy": { "rocket": 1, "c4": 1, "satchel": 2, "beancan": 9, "ammo": 16 },
+      "pureCostSulfur": { "rocket": 1400, "c4": 2200, "satchel": 960, "beancan": 1080, "ammo": 400 },
+      "cheapest": { "sulfur": 400, "combo": "16x Explosive Ammo", "ammoShots": 16 },
+      "best":     { "sulfur": 400, "combo": "16x Explosive Ammo", "ammoShots": 16, "sameAsCheapest": true },
+      "note": "Wood is weak; explosive ammo dominates. damage[ammo] tuned so ceil(200/12.6)=16. Realistically you'd just melee/fire it, but for explosives this is it."
+    },
+    {
+      "name": "Sheet Metal Door", "hp": 250, "face": "n/a", "confidence": "high",
+      "damage":  { "rocket": 220, "c4": 550, "satchel": 75, "beancan": 14, "ammo": 3.97 },
+      "destroy": { "rocket": 2, "c4": 1, "satchel": 4, "beancan": 18, "ammo": 63 },
+      "pureCostSulfur": { "rocket": 2800, "c4": 2200, "satchel": 1920, "beancan": 2160, "ammo": 1575 },
+      "cheapest": { "sulfur": 1575, "combo": "63x Explosive Ammo", "ammoShots": 63 },
+      "best":     { "sulfur": 1600, "combo": "1x Rocket + 8x Explosive Ammo", "ammoShots": 8, "sameAsCheapest": false },
+      "note": "KEY EXAMPLE. Cheapest is 63 ammo (1575) but nobody fires 63 shots. Practical best = 1 rocket (220 dmg, leaves 30 HP) + 8 ammo = 1600, only +25 sulfur for 9 actions instead of 63. Owner-confirmed. (If rocket does 236 not 220, the mix is even 1500 and also the absolute cheapest.)"
+    },
+    {
+      "name": "Garage Door", "hp": 600, "face": "n/a", "confidence": "high",
+      "damage":  { "rocket": 220, "c4": 440, "satchel": 70, "beancan": 14.4, "ammo": 4 },
+      "destroy": { "rocket": 3, "c4": 2, "satchel": 9, "beancan": 42, "ammo": 150 },
+      "pureCostSulfur": { "rocket": 4200, "c4": 4400, "satchel": 4320, "beancan": 5040, "ammo": 3750 },
+      "cheapest": { "sulfur": 3200, "combo": "1x C4 + 40x Explosive Ammo", "ammoShots": 40 },
+      "best":     { "sulfur": 3200, "combo": "1x C4 + 40x Explosive Ammo", "ammoShots": 40, "sameAsCheapest": true },
+      "note": "Owner-confirmed: 3 rockets / 2 C4 / 150 ammo; best = 1 C4 + ~40 ammo. C4 does 440 -> 1 C4 leaves 160 HP -> 40 ammo (owner cited 41; ±1 round is within tolerance). Here cheapest IS practical: dropping the ~40 shots would need 2 C4 (+37%), not worth it."
+    },
+    {
+      "name": "Armored Door", "hp": 1000, "face": "n/a", "confidence": "high",
+      "damage":  { "rocket": 200, "c4": 440, "satchel": 70, "beancan": 14.5, "ammo": 4 },
+      "destroy": { "rocket": 5, "c4": 3, "satchel": 15, "beancan": 69, "ammo": 250 },
+      "pureCostSulfur": { "rocket": 7000, "c4": 6600, "satchel": 7200, "beancan": 8280, "ammo": 6250 },
+      "cheapest": { "sulfur": 5150, "combo": "2x C4 + 30x Explosive Ammo", "ammoShots": 30 },
+      "best":     { "sulfur": 5150, "combo": "2x C4 + 30x Explosive Ammo", "ammoShots": 30, "sameAsCheapest": true },
+      "note": "Owner-confirmed: 1000 HP / 3 C4 / 250 ammo; optimum = 2 C4 + 30 ammo. C4 corrected 400 -> 440 (2 C4 = 880, leaves 120 -> 30 ammo). 3 C4 would be 6600, so the mix wins and is also practical here."
+    },
+    {
+      "name": "Stone Wall", "hp": 500, "face": "hard (outside)", "confidence": "high",
+      "damage":  { "rocket": 137, "c4": 275, "satchel": 52, "beancan": 11, "ammo": 2.71 },
+      "destroy": { "rocket": 4, "c4": 2, "satchel": 10, "beancan": 46, "ammo": 185 },
+      "pureCostSulfur": { "rocket": 5600, "c4": 4400, "satchel": 4800, "beancan": 5520, "ammo": 4625 },
+      "cheapest": { "sulfur": 4275, "combo": "83x Explosive Ammo + 1x C4", "ammoShots": 83 },
+      "best":     { "sulfur": 4400, "combo": "2x C4", "ammoShots": 0, "sameAsCheapest": false },
+      "note": "Rocket 137 to hard side (cross-confirmed). C4 275 to all walls. Cheapest = 83 ammo + 1 C4 (4275; the C4 covers the big remainder, so 1 fewer ammo than '1 C4 + 84 ammo' = 4300). 83 shots is over the 50 cap, so practical best = 2 C4 (4400, +125 to skip the shots). High External Stone Wall is identical (500 HP)."
+    },
+    {
+      "name": "Sheet Metal Wall", "hp": 1000, "face": "hard (outside)", "confidence": "medium",
+      "damage":  { "rocket": 137, "c4": 275, "satchel": 44, "beancan": 7.65, "ammo": 2.5 },
+      "destroy": { "rocket": 8, "c4": 4, "satchel": 23, "beancan": 131, "ammo": 400 },
+      "pureCostSulfur": { "rocket": 11200, "c4": 8800, "satchel": 11040, "beancan": 15720, "ammo": 10000 },
+      "cheapest": { "sulfur": 8350, "combo": "3x C4 + 70x Explosive Ammo", "ammoShots": 70 },
+      "best":     { "sulfur": 8800, "combo": "4x C4", "ammoShots": 0, "sameAsCheapest": false },
+      "note": "CONFLICT: rocket count 7 (rusthelp) vs 8 (rocket 137 -> ceil(1000/137)=8); using 8. C4 275 -> 4. Cheapest 3 C4 + 70 ammo (8350); 70 shots is over the 50 cap, so practical best = 4 C4 (8800, +450 to skip 70 shots)."
+    },
+    {
+      "name": "Armored Wall", "hp": 2000, "face": "hard (outside)", "confidence": "high",
+      "damage":  { "rocket": 137, "c4": 275, "satchel": 44, "beancan": 9, "ammo": 2.504 },
+      "destroy": { "rocket": 15, "c4": 8, "satchel": 46, "beancan": 223, "ammo": 799 },
+      "pureCostSulfur": { "rocket": 21000, "c4": 17600, "satchel": 22080, "beancan": 26760, "ammo": 19975 },
+      "cheapest": { "sulfur": 16150, "combo": "7x C4 + 30x Explosive Ammo", "ammoShots": 30 },
+      "best":     { "sulfur": 16150, "combo": "7x C4 + 30x Explosive Ammo", "ammoShots": 30, "sameAsCheapest": true },
+      "note": "2000 HP (NOT 1000 - older charts had 1000). C4 275 -> 8. Best = cheapest = 7 C4 + 30 ammo (16150); 30 shots is under the 50 cap, so no reason to pay +1450 for pure 8 C4 (17600). ammo damage 2.504 so ceil(2000/2.504)=799."
+    }
+  ],
+
+  "additionalEntities_unverified": [
+    { "name": "High External Stone Wall", "hp": 500, "note": "Same as Stone Wall (rocket 4 / C4 2 / ammo ~185/173)." },
+    { "name": "High External Wood Wall", "hp": 500, "note": "Not researched in detail; weak to fire/ammo." },
+    { "name": "Ladder Hatch / Floor / Ceiling", "hp": null, "note": "Same tier-resistances as the matching wall material; not added." }
+  ],
+
+  "caveats": [
+    "Damage varies per entity AND per face (soft inside vs hard outside). Wall values here are hard side. Doors have no soft/hard split.",
+    "Lumpy explosives (rocket, C4) have entity-specific damage; granular ones (satchel/beancan/ammo) are tuned so ceil(hp/damage) matches published destroy-counts.",
+    "Rocket vs sheet metal door: 220 (gamerempire, owner-confirmed) vs 236 (another source). Using 220; either way the practical best is 1 rocket + a few ammo.",
+    "Sheet metal wall: 7 rockets (rusthelp) vs 8 (rocket=137 dmg). Using 8.",
+    "Armored door: OWNER-CONFIRMED 1000 HP / 3 C4 / 250 ammo, optimum 2 C4 + 30 ammo (C4 damage = 440).",
+    "Garage door: OWNER-CONFIRMED 600 HP / 3 rockets / 2 C4 / 150 ammo, best 1 C4 + ~40 ammo (owner cited 41; ±1 round ignored).",
+    "Beancan sulfur: 120 (door charts) vs 60 (one stone-wall figure). Using 120.",
+    "Rocket sulfur modelled as 1400 (raw craft, matches the app); some calculators show ~1450 from batch rounding.",
+    "Recommendations + mixes use ONLY meta tools (rocket, C4, explosive ammo). Satchel/beancan are reference-only (meta:false); HV/incendiary rocket not included yet.",
+    "The app shows the Pareto frontier of plans (non-dominated on sulfur vs ammo shots), not just single explosives - this is the 'Kreuzprodukt' of mixes. Cheapest = top of frontier (most shots); each step down spends a bit more to shoot less.",
+    "PRACTICAL 'best' vs absolute 'cheapest': best = the cheapest plan with explosive-ammo shots <= ammoCap (50). Shots are NOT penalised one-for-one (you fire faster than you reload), they're just capped; over the cap the solver adds a rocket/C4 to drop below it. Satchel/beancan never qualify (annoying to handle).",
+    "Solver assumes you can finish a weakened entity with the finisher (true in-game)."
+  ],
+
+  "sources": [
+    { "name": "rusthelp.com", "use": "Entity HP + destroy counts + sulfur totals (current)", "urls": [
+      "https://rusthelp.com/items/sheet-metal-door",
+      "https://rusthelp.com/items/garage-door",
+      "https://rusthelp.com/items/armored-door",
+      "https://rusthelp.com/items/wooden-door",
+      "https://rusthelp.com/building/stone-wall",
+      "https://rusthelp.com/building/metal-wall",
+      "https://rusthelp.com/building/armored-wall",
+      "https://rusthelp.com/items/high-external-stone-wall"
+    ]},
+    { "name": "gamerempire.net", "use": "Per-hit rocket damage to doors (220) and C4 to garage (440)", "urls": [
+      "https://gamerempire.net/rust-how-many-rockets-to-destroy-doors/",
+      "https://gamerempire.net/rust-how-many-c4-to-destroy-doors/",
+      "https://gamerempire.net/rust-how-many-rockets-to-destroy-walls/",
+      "https://gamerempire.net/rust-how-to-destroy-armored-walls/"
+    ]},
+    { "name": "tradeit.gg", "use": "Explosives chart, sulfur per explosive, C4 275/rocket 137 walls", "urls": [
+      "https://tradeit.gg/blog/rust-explosives-chart/",
+      "https://tradeit.gg/blog/best-way-to-destroy-doors-in-rust/"
+    ]},
+    { "name": "namehero.com", "use": "General raid chart cross-check", "urls": [
+      "https://www.namehero.com/gaming-blog/rust-raid-chart-everything-you-need-to-know/"
+    ]},
+    { "name": "other calculators", "use": "Cross-checks", "urls": [
+      "https://xgamingserver.com/tools/rust/raid-calculator",
+      "https://wikirust.com/",
+      "https://www.rustlab.gg/building/sheet-metal-door"
+    ]}
+  ],
+
+  "_meta": { "gatheredOn": "2026-06-13", "gameUpdateRef": "904.83-era recipes; raid charts last verified ~2026-06-01 per sources" }
+}
