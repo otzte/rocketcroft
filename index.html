@@ -605,13 +605,14 @@ function progressToNext(R, stock, method){
 /* ============================================================
    CHEAPEST-BOOM SOLVER
    Minimise sulfur to deal >= HP damage to an entity, using the REAL
-   per-hit damage of each explosive against it. We search every
-   (primary, finisher) pair over all primary hit counts j: pile on j
-   hits of the primary, then cover whatever HP is left with the cheapest
-   number of one finisher. Overkill on the final hit is free. This
-   covers all pure methods (j = hits-to-kill, or j = 0) and the classic
-   mixes ("1 rocket leaves 30 HP, finish with a few explosive ammo")
-   exactly — ~20k iterations, runs live. */
+   per-hit damage of each explosive against it. We enumerate every
+   quantity of the chunky meta tools (rocket, C4) and close the leftover
+   HP with the finest tool (explosive ammo), whose tiny per-hit damage
+   wastes almost no overkill. That covers pure methods, two-way mixes AND
+   three-way mixes (e.g. "3 C4 + 1 rocket + 16 ammo") — the true sulfur
+   optimum over the meta toolset, because for any fixed chunky count the
+   minimal ammo finish dominates. Overkill on the final hit is free. A few
+   hundred iterations, runs live. */
 function dmgMapFor(t){
   if(t.dmg) return t.dmg;                   // listed entity: real per-hit damage
   const d = {};                             // custom HP: fall back to soft damage
@@ -622,27 +623,36 @@ function solveBoom(t){
   const dmg = dmgMapFor(t), hp = t.hp;
   const ms = BOOM_METHODS.filter(m => m.meta && (dmg[m.key]||0) > 0);
   const cost = m => m.sulfur();
-  const kill = m => Math.ceil(hp / dmg[m.key]);    // hits to destroy alone
-  const cands = [];                                // every (primary, finisher) plan
+  // The finest-granularity meta tool (smallest per-hit damage -> explosive
+  // ammo) closes the remainder. Every chunky tool (rocket, C4, ...) is
+  // enumerated in every useful quantity, so plans mix all three types.
+  const fin    = ms.reduce((a,m) => dmg[m.key] < dmg[a.key] ? m : a);
+  const chunky = ms.filter(m => m !== fin);
+  const cands  = [];                               // every chunky-mix + ammo finish
   const add = combo => {
+    combo = combo.filter(c => c.n > 0).sort((a,b) => dmg[b.m.key] - dmg[a.m.key]);
+    if(!combo.length) return;
     const sulfur  = combo.reduce((a,c) => a + c.n * cost(c.m), 0);
-    const ammo    = combo.reduce((a,c) => a + (c.m.key === "ammo" ? c.n : 0), 0);
+    const ammo    = combo.reduce((a,c) => a + (c.m.key === fin.key ? c.n : 0), 0);
     const actions = combo.reduce((a,c) => a + c.n, 0);   // total items handled (informative)
     cands.push({ sulfur, ammo, actions, combo });
   };
-  for(const p of ms){
-    const maxJ = kill(p);
-    for(let j=0; j<=maxJ; j++){
-      const rem = Math.max(0, hp - j * dmg[p.key]);
-      if(rem === 0){ if(j > 0) add([{ m:p, n:j }]); continue; }
-      for(const f of ms){
-        const kf = Math.ceil(rem / dmg[f.key]);
-        add(p.key === f.key
-          ? [{ m:p, n:j + kf }]
-          : (j>0 ? [{ m:p, n:j }, { m:f, n:kf }] : [{ m:f, n:kf }]));
-      }
+  // Recurse over chunky-tool counts; finish whatever HP is left with ammo.
+  // Once the chunky hits alone already cross HP, more of that tool is pure
+  // waste, so we stop climbing that count.
+  const build = (i, picked, dealt) => {
+    if(i === chunky.length){
+      const rem = Math.max(0, hp - dealt);
+      add([...picked, { m:fin, n:Math.ceil(rem / dmg[fin.key]) }]);
+      return;
     }
-  }
+    const m = chunky[i], maxN = Math.ceil(hp / dmg[m.key]);
+    for(let n=0; n<=maxN; n++){
+      build(i+1, n ? [...picked, { m, n }] : picked, dealt + n * dmg[m.key]);
+      if(dealt + n * dmg[m.key] >= hp) break;
+    }
+  };
+  build(0, [], 0);
   // dedupe identical plans, then rank by sulfur (tie -> fewer shots)
   const seen = new Set(), distinct = [];
   for(const c of cands){

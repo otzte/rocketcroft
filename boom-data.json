@@ -7,12 +7,12 @@
     "entities[].destroy": "units to destroy alone = ceil(hp / damage); should match published raid charts",
     "entities[].pureCostSulfur": "destroy * methods.sulfur",
     "entities[].cheapest": "absolute minimum sulfur to cross HP (single explosive or 2-explosive meta mix); often dozens of ammo shots",
-    "entities[].best": "PRACTICAL pick: the CHEAPEST meta plan whose explosive-ammo shot count is <= ammoCap. Shots are fast (not penalised per-shot), just capped; over the cap, spend one more rocket/C4 to shoot less",
+    "entities[].best": "PRACTICAL pick: the CHEAPEST meta plan whose explosive-ammo shot count is <= ammoCap. Shots are fast (not penalised per-shot), just capped; over the cap, spend a rocket/C4 to shoot less. Plans may mix all three meta tools (e.g. C4 + rocket + ammo), not just two",
     "ammoCap": "max explosive-5.56 rounds tolerated in the 'best' plan; 50 (user: 40-50)",
     "confidence": "high = cross-confirmed; medium = derived or single-source; low = conflicting sources"
   },
   "ammoCap": 50,
-  "_philosophy": "Nobody raids with satchel+beancan (annoying to handle), and you empty 10 explosive rounds faster than you reload a rocket - so shots aren't penalised one-for-one, they're just capped. (1) Only meta tools (rocket, C4, ammo) are used for recommendations + mixes. (2) The app ranks the Pareto frontier from 'cheapest but most shots' to 'fewest shots'. (3) 'best' = the cheapest plan with ammo shots <= ammoCap (50). Examples: sheet door best = 1 rocket + 8 ammo (63 ammo is cheaper but >cap); garage stays 1 C4 + ~40 ammo (under cap); armored wall stays 7 C4 + 30 ammo (30 under cap); stone/metal wall go to pure C4 because their cheapest mix needs 70-83 shots.",
+  "_philosophy": "Nobody raids with satchel+beancan (annoying to handle), and you empty 10 explosive rounds faster than you reload a rocket - so shots aren't penalised one-for-one, they're just capped. (1) Only meta tools (rocket, C4, ammo) are used for recommendations + mixes. (2) The app ranks the Pareto frontier from 'cheapest but most shots' to 'fewest shots'. (3) 'best' = the cheapest plan with ammo shots <= ammoCap (50). Examples: sheet door best = 1 rocket + 8 ammo (63 ammo is cheaper but >cap); garage stays 1 C4 + ~40 ammo (under cap); armored wall stays 7 C4 + 30 ammo (30 under cap); stone wall goes to 2 C4 (its 84-shot mix is over cap); sheet metal wall goes to the three-way mix 3 C4 + 1 rocket + 16 ammo (16 shots, 400 cheaper than pure 4 C4).",
   "_uiDesign": "Recommendation + full transparency, not auto-decide-everything. (a) Prominent: the rocket/C4+ammo plans ranked (the meta cross-product), with the capped 'best' highlighted. (b) Every row shows BOTH metrics - ammo shots AND total actions - purely informative, so the user can pick their own trade-off. (c) A dim single-explosive reference line lists all five tools incl. satchel/beancan (marked *), informative only, never picked as best. The cap drives the recommendation; the metrics and satchel/beancan are there to inform, not to decide.",
 
   "_metaToolset": "Only rocket, C4 and explosive 5.56 ammo (meta:true) are used for the recommended cheapest/best plans and their mixes. Satchel and beancan (meta:false) are unreliable/slow and shown as pure-cost reference only - never in the best mix. This matches how players actually raid.",
@@ -78,8 +78,8 @@
       "destroy": { "rocket": 8, "c4": 4, "satchel": 23, "beancan": 131, "ammo": 400 },
       "pureCostSulfur": { "rocket": 11200, "c4": 8800, "satchel": 11040, "beancan": 15720, "ammo": 10000 },
       "cheapest": { "sulfur": 8350, "combo": "3x C4 + 70x Explosive Ammo", "ammoShots": 70 },
-      "best":     { "sulfur": 8800, "combo": "4x C4", "ammoShots": 0, "sameAsCheapest": false },
-      "note": "CONFLICT: rocket count 7 (rusthelp) vs 8 (rocket 137 -> ceil(1000/137)=8); using 8. C4 275 -> 4. Cheapest 3 C4 + 70 ammo (8350); 70 shots is over the 50 cap, so practical best = 4 C4 (8800, +450 to skip 70 shots)."
+      "best":     { "sulfur": 8400, "combo": "3x C4 + 1x Rocket + 16x Explosive Ammo", "ammoShots": 16, "sameAsCheapest": false },
+      "note": "CONFLICT: rocket count 7 (rusthelp) vs 8 (rocket 137 -> ceil(1000/137)=8); using 8. C4 275 -> 4. Cheapest 3 C4 + 70 ammo (8350) is over the 50 cap. Practical best is the THREE-WAY mix 3 C4 + 1 rocket + 16 ammo (8400): 825+137 dmg leaves 38 HP -> 16 ammo, only 16 shots and 400 cheaper than pure 4 C4 (8800). Best example of why the solver mixes all three meta tools, not just two."
     },
     {
       "name": "Armored Wall", "hp": 2000, "face": "hard (outside)", "confidence": "high",
